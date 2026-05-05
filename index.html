@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego para ti</title>
+
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #121213;
+    color: white;
+    text-align: center;
+    margin: 0;
+  }
+
+  h1 { margin: 15px; }
+
+  #grid {
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+    margin: 20px;
+  }
+
+  .row {
+    display: grid;
+    gap: 6px;
+  }
+
+  .tile {
+    width: 45px;
+    height: 45px;
+    border: 2px solid #3a3a3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 20px;
+  }
+
+  .correct { background: #538d4e; }
+  .present { background: #b59f3b; }
+  .absent { background: #3a3a3c; }
+
+  #keyboard {
+    max-width: 500px;
+    margin: auto;
+  }
+
+  .key {
+    padding: 10px;
+    margin: 3px;
+    background: #818384;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+
+  #message {
+    height: 30px;
+  }
+</style>
+</head>
+
+<body>
+
+<h1 id="title">Nivel 1</h1>
+
+<div id="grid"></div>
+
+<div id="keyboard"></div>
+
+<p id="message"></p>
+
+<script>
+const levels = ["ABUELO", "AUSTRIA", "CACAOLAT"];
+let level = 0;
+let currentGuess = "";
+let row = 0;
+const maxRows = 6;
+
+const grid = document.getElementById("grid");
+const keyboard = document.getElementById("keyboard");
+
+function createGrid() {
+  grid.innerHTML = "";
+  let wordLength = levels[level].length;
+
+  grid.style.gridTemplateColumns = `repeat(${wordLength}, auto)`;
+
+  for (let r = 0; r < maxRows; r++) {
+    let rowDiv = document.createElement("div");
+    rowDiv.className = "row";
+
+    rowDiv.style.gridTemplateColumns = `repeat(${wordLength}, auto)`;
+
+    for (let c = 0; c < wordLength; c++) {
+      let tile = document.createElement("div");
+      tile.className = "tile";
+      rowDiv.appendChild(tile);
+    }
+
+    grid.appendChild(rowDiv);
+  }
+}
+
+function createKeyboard() {
+  const keys = "QWERTYUIOPASDFGHJKLÑZXCVBNM";
+  keyboard.innerHTML = "";
+
+  keys.split("").forEach(k => {
+    let btn = document.createElement("button");
+    btn.textContent = k;
+    btn.className = "key";
+    btn.onclick = () => addLetter(k);
+    keyboard.appendChild(btn);
+  });
+
+  let enter = document.createElement("button");
+  enter.textContent = "ENTER";
+  enter.className = "key";
+  enter.onclick = submitGuess;
+
+  let del = document.createElement("button");
+  del.textContent = "←";
+  del.className = "key";
+  del.onclick = deleteLetter;
+
+  keyboard.appendChild(enter);
+  keyboard.appendChild(del);
+}
+
+function addLetter(letter) {
+  if (currentGuess.length < levels[level].length) {
+    currentGuess += letter;
+    updateGrid();
+  }
+}
+
+function deleteLetter() {
+  currentGuess = currentGuess.slice(0, -1);
+  updateGrid();
+}
+
+function updateGrid() {
+  let rowTiles = grid.children[row].children;
+  for (let i = 0; i < rowTiles.length; i++) {
+    rowTiles[i].textContent = currentGuess[i] || "";
+  }
+}
+
+function submitGuess() {
+  let word = levels[level];
+  if (currentGuess.length !== word.length) return;
+
+  let tiles = grid.children[row].children;
+  let wordArr = word.split("");
+  let guessArr = currentGuess.split("");
+
+  // Primera pasada (correctos)
+  guessArr.forEach((l, i) => {
+    if (l === wordArr[i]) {
+      tiles[i].classList.add("correct");
+      wordArr[i] = null;
+      guessArr[i] = null;
+    }
+  });
+
+  // Segunda pasada (presentes)
+  guessArr.forEach((l, i) => {
+    if (l && wordArr.includes(l)) {
+      tiles[i].classList.add("present");
+      wordArr[wordArr.indexOf(l)] = null;
+    } else if (l) {
+      tiles[i].classList.add("absent");
+    }
+  });
+
+  if (currentGuess === word) {
+    level++;
+    if (level < levels.length) {
+      document.getElementById("message").innerText = "Nivel superado 😏";
+      document.getElementById("title").innerText = "Nivel " + (level + 1);
+      resetLevel();
+    } else {
+      document.getElementById("message").innerText = "Has ganado todo 🧠🔥";
+    }
+    return;
+  }
+
+  row++;
+  currentGuess = "";
+
+  if (row >= maxRows) {
+    document.getElementById("message").innerText = "Era: " + word;
+  }
+}
+
+function resetLevel() {
+  row = 0;
+  currentGuess = "";
+  createGrid();
+}
+
+createGrid();
+createKeyboard();
+</script>
+
+</body>
+</html>
